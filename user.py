@@ -8,7 +8,7 @@ from flask_expects_json import expects_json
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from models import db, User
-from middleware import admin_token_required, token_optional, token_required
+from decorators import auth_token_optional, auth_token_required
 from response import (
     AuthorizationError,
     success_json,
@@ -20,8 +20,11 @@ api = Blueprint("users", __name__)
 
 
 @api.route("/user", methods=["GET"])
-@admin_token_required
+@auth_token_required
 def get_all_users():
+    if not request.claims["adm"]:
+        raise AuthorizationError("only admin user can access this route")
+
     users = User.query.with_entities(
         User.public_id,
         User.name,
@@ -43,7 +46,7 @@ def get_all_users():
         "required": ["name", "password"],
     }
 )
-@token_optional
+@auth_token_optional
 def create_user():
     admin = False
     data = request.get_json()
@@ -72,7 +75,7 @@ def create_user():
 
 
 @api.route("/user/<public_id>", methods=["GET"])
-@token_required
+@auth_token_required
 def get_one_user(public_id):
     if not request.claims["adm"] and request.claims["sub"] != public_id:
         raise AuthorizationError("you are not allowed to access other users")
@@ -94,8 +97,11 @@ def get_one_user(public_id):
 
 
 @api.route("/user/<public_id>", methods=["DELETE"])
-@admin_token_required
+@auth_token_required
 def delete_user(public_id):
+    if not request.claims["adm"]:
+        raise AuthorizationError("only admin user can access this route")
+
     user = User.query.filter_by(public_id=public_id).first()
 
     if not user:

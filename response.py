@@ -8,6 +8,26 @@ def success_json(**kwargs):
     return jsonify(dict({"success": True}, **kwargs))
 
 
+def http_exception_handler(e):
+    """Return JSON instead of text for HTTP errors."""
+
+    message = e.description
+
+    # use concise message for ValidationErrors
+    if isinstance(e.description, ValidationError):
+        message = e.description.message
+
+    return make_response(
+        jsonify(
+            {
+                "success": False,
+                "message": message,
+            }
+        ),
+        e.code,
+    )
+
+
 class UserNotFound(HTTPException):
     """Raise if the user does not exist and never existed."""
 
@@ -34,23 +54,3 @@ class TokenValidationError(HTTPException):
 
     code = 401
     description = "missing or malformed jwt token"
-
-
-def handle_http_exception(e):
-    """Return JSON instead of text for HTTP errors."""
-
-    message = e.description
-
-    # use concise message for ValidationErrors
-    if isinstance(e.description, ValidationError):
-        message = e.description.message
-
-    return make_response(
-        jsonify(
-            {
-                "success": False,
-                "message": message,
-            }
-        ),
-        e.code,
-    )

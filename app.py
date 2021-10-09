@@ -5,7 +5,7 @@ from werkzeug.exceptions import HTTPException
 
 from models import db
 from user import api
-from response import handle_http_exception
+from response import http_exception_handler
 
 
 app = Flask(__name__)
@@ -16,7 +16,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(app)
 app.register_blueprint(api)
-app.register_error_handler(HTTPException, handle_http_exception)
+app.register_error_handler(HTTPException, http_exception_handler)
 
 
 if __name__ == "__main__":
