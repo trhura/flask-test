@@ -7,13 +7,20 @@ from flask import Blueprint, request, current_app
 from flask_expects_json import expects_json
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from response import UserNotFound, AuthenticationFailure, success_json
 from models import db, User
+from middleware import admin_token_required, token_optional, token_required
+from response import (
+    AuthorizationError,
+    success_json,
+    UserNotFound,
+    AuthenticationFailure,
+)
 
-user_api = Blueprint("users", __name__)
+api = Blueprint("users", __name__)
 
 
-@user_api.route("/user", methods=["GET"])
+@api.route("/user", methods=["GET"])
+@admin_token_required
 def get_all_users():
     users = User.query.with_entities(
         User.public_id,
@@ -24,23 +31,38 @@ def get_all_users():
     return success_json(users=[dict(user) for user in users])
 
 
-@user_api.route("/user", methods=["POST"])
+@api.route("/user", methods=["POST"])
 @expects_json(
     {
         "type": "object",
-        "properties": {"name": {"type": "string"}, "password": {"type": "string"}},
+        "properties": {
+            "name": {"type": "string"},
+            "password": {"type": "string"},
+            "admin": {"type": "boolean"},
+        },
         "required": ["name", "password"],
     }
 )
+@token_optional
 def create_user():
+    admin = False
     data = request.get_json()
+
+    if "admin" in data and data["admin"]:
+        if not hasattr(request, "claims"):
+            raise AuthorizationError("only admin can create admin users")
+
+        if not request.claims["adm"]:
+            raise AuthorizationError("only admin can create admin users")
+
+        admin = True
 
     hashed_password = generate_password_hash(data["password"], method="sha256")
     new_user = User(
         public_id=str(uuid.uuid4()),
         name=data["name"],
         password=hashed_password,
-        admin=False,
+        admin=admin,
     )
 
     db.session.add(new_user)
@@ -49,8 +71,12 @@ def create_user():
     return success_json(messsage="new user created")
 
 
-@user_api.route("/user/<public_id>", methods=["GET"])
+@api.route("/user/<public_id>", methods=["GET"])
+@token_required
 def get_one_user(public_id):
+    if not request.claims["adm"] and request.claims["sub"] != public_id:
+        raise AuthorizationError("you are not allowed to access other users")
+
     user = (
         User.query.filter_by(public_id=public_id)
         .with_entities(
@@ -67,7 +93,8 @@ def get_one_user(public_id):
     return success_json(user=dict(user))
 
 
-@user_api.route("/user/<public_id>", methods=["DELETE"])
+@api.route("/user/<public_id>", methods=["DELETE"])
+@admin_token_required
 def delete_user(public_id):
     user = User.query.filter_by(public_id=public_id).first()
 
@@ -80,9 +107,7 @@ def delete_user(public_id):
     return success_json(message="the user has been deleted")
 
 
-@user_api.route(
-    "/login",
-)
+@api.route("/login")
 def login():
     auth = request.authorization
     if not auth or not auth.username or not auth.password:
@@ -94,8 +119,13 @@ def login():
 
     if check_password_hash(user.password, auth.password):
         token = jwt.encode(
-            {"sub": user.public_id, "exp": datetime.utcnow() + timedelta(minutes=30)},
+            {
+                "sub": user.public_id,
+                "exp": datetime.utcnow() + timedelta(minutes=30),
+                "adm": user.admin,
+            },
             current_app.config["SECRET_KEY"],
+            algorithm="HS256",
         )
 
         return success_json(auth_token=token)

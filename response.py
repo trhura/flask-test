@@ -22,6 +22,20 @@ class AuthenticationFailure(HTTPException):
     description = "Failed to authenticate user"
 
 
+class AuthorizationError(HTTPException):
+    """Raise on accessing unauthorized resource"""
+
+    code = 401
+    description = "you do not have authorization to accesss this resource"
+
+
+class TokenValidationError(HTTPException):
+    """Raise during jwt token validation errors"""
+
+    code = 401
+    description = "missing or malformed jwt token"
+
+
 def handle_http_exception(e):
     """Return JSON instead of text for HTTP errors."""
 
