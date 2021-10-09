@@ -1,9 +1,11 @@
+from dataclasses import dataclass
 from flask_sqlalchemy import SQLAlchemy
 
 
 db = SQLAlchemy()
 
 
+@dataclass
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     public_id = db.Column(db.String(64), unique=True)
