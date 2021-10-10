@@ -2,7 +2,7 @@ from models import User
 
 
 def test_delete_user_without_auth_token(client, usera):
-    resp = client.delete("/user/" + usera.uuid)
+    resp = client.delete("/users/" + usera.uuid)
     data = resp.get_json()
     assert resp.status_code == 401
 
@@ -12,7 +12,7 @@ def test_delete_user_without_auth_token(client, usera):
 
 def test_delete_user_without_admin_auth_token(client, usera, usera_auth_token):
     resp = client.delete(
-        "/user/" + usera.uuid,
+        "/users/" + usera.uuid,
         headers={"Authorization": "Bearer " + usera_auth_token},
     )
     data = resp.get_json()
@@ -24,7 +24,7 @@ def test_delete_user_without_admin_auth_token(client, usera, usera_auth_token):
 
 def test_delete_user_successful(client, randname, admin_auth_token):
     resp = client.post(
-        "/user",
+        "/users",
         json={"username": randname, "fullname": randname, "password": "pass"},
         headers={"Authorization": "Bearer " + admin_auth_token},
     )
@@ -34,7 +34,7 @@ def test_delete_user_successful(client, randname, admin_auth_token):
     assert user.username == randname
 
     resp = client.delete(
-        "/user/" + user.uuid,
+        "/users/" + user.uuid,
         headers={"Authorization": "Bearer " + admin_auth_token},
     )
     data = resp.get_json()

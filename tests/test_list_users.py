@@ -1,5 +1,5 @@
 def test_list_users_without_auth_token(client):
-    resp = client.get("/user")
+    resp = client.get("/users")
     data = resp.get_json()
     assert resp.status_code == 401
 
@@ -9,7 +9,7 @@ def test_list_users_without_auth_token(client):
 
 def test_list_users_without_admin_auth_token(client, usera_auth_token):
     resp = client.get(
-        "/user",
+        "/users",
         headers={"Authorization": "Bearer " + usera_auth_token},
     )
     data = resp.get_json()
@@ -21,7 +21,7 @@ def test_list_users_without_admin_auth_token(client, usera_auth_token):
 
 def test_list_users_with_usera(client, usera, admin_auth_token):
     resp = client.get(
-        "/user",
+        "/users",
         headers={"Authorization": "Bearer " + admin_auth_token},
     )
     data = resp.get_json()
@@ -38,7 +38,7 @@ def test_list_users_with_usera(client, usera, admin_auth_token):
 
 def test_list_users_with_usera_userb(client, usera, userb, admin_auth_token):
     resp = client.get(
-        "/user",
+        "/users",
         headers={"Authorization": "Bearer " + admin_auth_token},
     )
     data = resp.get_json()

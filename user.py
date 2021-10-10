@@ -22,7 +22,7 @@ from response import (
 api = Blueprint("users", __name__)
 
 
-@api.route("/user", methods=["GET"])
+@api.route("/users", methods=["GET"])
 @auth_token_required
 def list_users():
     if not request.admin_user:
@@ -38,7 +38,7 @@ def list_users():
     return success_json(users=[dict(user) for user in users])
 
 
-@api.route("/user", methods=["POST"])
+@api.route("/users", methods=["POST"])
 @expects_json(
     {
         "type": "object",
@@ -86,7 +86,7 @@ def create_user():
     return success_json(message="new user created")
 
 
-@api.route("/user/<uuid>", methods=["GET"])
+@api.route("/users/<uuid>", methods=["GET"])
 @auth_token_required
 def get_user(uuid):
     if not request.admin_user and request.user_id != uuid:
@@ -109,7 +109,7 @@ def get_user(uuid):
     return success_json(user=dict(user))
 
 
-@api.route("/user/<uuid>", methods=["POST"])
+@api.route("/users/<uuid>", methods=["POST"])
 @expects_json(
     {
         "type": "object",
@@ -159,7 +159,7 @@ def update_user(uuid):
     return success_json(message="user updated successfully")
 
 
-@api.route("/user/<uuid>", methods=["DELETE"])
+@api.route("/users/<uuid>", methods=["DELETE"])
 @auth_token_required
 def delete_user(uuid):
     if not request.admin_user:

@@ -3,7 +3,7 @@ from werkzeug.security import check_password_hash
 
 
 def test_update_user_without_json_body(client, usera):
-    resp = client.post("/user/" + usera.uuid)
+    resp = client.post("/users/" + usera.uuid)
     data = resp.get_json()
     assert resp.status_code == 400
 
@@ -12,7 +12,7 @@ def test_update_user_without_json_body(client, usera):
 
 
 def test_update_user_without_any_param(client, usera):
-    resp = client.post("/user/" + usera.uuid, json={})
+    resp = client.post("/users/" + usera.uuid, json={})
     data = resp.get_json()
     assert resp.status_code == 400
 
@@ -21,7 +21,7 @@ def test_update_user_without_any_param(client, usera):
 
 
 def test_update_user_without_auth_token(client, usera):
-    resp = client.post("/user/" + usera.uuid, json={"fullname": "Thura"})
+    resp = client.post("/users/" + usera.uuid, json={"fullname": "Thura"})
     data = resp.get_json()
     assert resp.status_code == 401
 
@@ -31,7 +31,7 @@ def test_update_user_without_auth_token(client, usera):
 
 def test_update_user_with_invalid_token(client, usera, userb_auth_token):
     resp = client.post(
-        "/user/" + usera.uuid,
+        "/users/" + usera.uuid,
         json={"fullname": "Thura"},
         headers={
             "Authorization": "Bearer " + userb_auth_token,
@@ -46,7 +46,7 @@ def test_update_user_with_invalid_token(client, usera, userb_auth_token):
 
 def test_update_user_succesful_fullname(client, usera, usera_auth_token):
     resp = client.post(
-        "/user/" + usera.uuid,
+        "/users/" + usera.uuid,
         json={"fullname": "Thura"},
         headers={
             "Authorization": "Bearer " + usera_auth_token,
@@ -64,7 +64,7 @@ def test_update_user_succesful_fullname(client, usera, usera_auth_token):
 
 def test_update_user_succesful_password(client, usera, usera_auth_token):
     resp = client.post(
-        "/user/" + usera.uuid,
+        "/users/" + usera.uuid,
         json={"password": "newpass"},
         headers={
             "Authorization": "Bearer " + usera_auth_token,
@@ -82,7 +82,7 @@ def test_update_user_succesful_password(client, usera, usera_auth_token):
 
 def test_update_user_failed_admin(client, usera, usera_auth_token):
     resp = client.post(
-        "/user/" + usera.uuid,
+        "/users/" + usera.uuid,
         json={"admin": True},
         headers={
             "Authorization": "Bearer " + usera_auth_token,
@@ -97,7 +97,7 @@ def test_update_user_failed_admin(client, usera, usera_auth_token):
 
 def test_update_user_succesful_admin(client, usera, admin_auth_token):
     resp = client.post(
-        "/user/" + usera.uuid,
+        "/users/" + usera.uuid,
         json={"password": "xxx", "fullname": "newname", "admin": True},
         headers={
             "Authorization": "Bearer " + admin_auth_token,

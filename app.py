@@ -8,7 +8,7 @@ from user import api
 from response import http_exception_handler
 
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder=None)
 
 app.config["SECRET_KEY"] = "thisissecret"
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.getcwd() + "/development.db"

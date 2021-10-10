@@ -4,7 +4,7 @@ from werkzeug.security import check_password_hash
 
 
 def test_create_user_without_json_body(client):
-    resp = client.post("/user")
+    resp = client.post("/users")
     data = resp.get_json()
     assert resp.status_code == 400
 
@@ -13,7 +13,7 @@ def test_create_user_without_json_body(client):
 
 
 def test_create_user_without_name_param(client):
-    resp = client.post("/user", json={})
+    resp = client.post("/users", json={})
     data = resp.get_json()
     assert resp.status_code == 400
 
@@ -22,7 +22,7 @@ def test_create_user_without_name_param(client):
 
 
 def test_create_user_without_password_param(client):
-    resp = client.post("/user", json={"fullname": "Thura"})
+    resp = client.post("/users", json={"fullname": "Thura"})
     data = resp.get_json()
     assert resp.status_code == 400
 
@@ -32,7 +32,7 @@ def test_create_user_without_password_param(client):
 
 def test_create_user_without_username_param(client):
     resp = client.post(
-        "/user",
+        "/users",
         json={"fullname": "Thura", "password": "asdf"},
     )
     data = resp.get_json()
@@ -44,7 +44,7 @@ def test_create_user_without_username_param(client):
 
 def test_create_user_with_invalid_fullname(client):
     resp = client.post(
-        "/user", json={"fullname": 3, "password": "asdf", "username": "thura"}
+        "/users", json={"fullname": 3, "password": "asdf", "username": "thura"}
     )
     data = resp.get_json()
     assert resp.status_code == 400
@@ -55,7 +55,7 @@ def test_create_user_with_invalid_fullname(client):
 
 def test_create_user_with_invalid_password(client):
     resp = client.post(
-        "/user", json={"fullname": "Thura", "password": 3, "username": "thura"}
+        "/users", json={"fullname": "Thura", "password": 3, "username": "thura"}
     )
     data = resp.get_json()
     assert resp.status_code == 400
@@ -66,7 +66,7 @@ def test_create_user_with_invalid_password(client):
 
 def test_create_user_with_invalid_username(client):
     resp = client.post(
-        "/user", json={"fullname": 3, "password": "asdf", "username": "thura"}
+        "/users", json={"fullname": 3, "password": "asdf", "username": "thura"}
     )
     data = resp.get_json()
     assert resp.status_code == 400
@@ -77,7 +77,7 @@ def test_create_user_with_invalid_username(client):
 
 def test_create_user_successful(client, randname):
     resp = client.post(
-        "/user",
+        "/users",
         json={"fullname": randname.upper(), "username": randname, "password": "asfd"},
     )
     data = resp.get_json()
@@ -95,7 +95,7 @@ def test_create_user_successful(client, randname):
 
 def test_create_user_failed_on_duplicate(client, randname):
     resp = client.post(
-        "/user",
+        "/users",
         json={"fullname": randname.upper(), "username": randname, "password": "asfd"},
     )
     data = resp.get_json()
@@ -105,7 +105,7 @@ def test_create_user_failed_on_duplicate(client, randname):
     assert data["message"] == "new user created"
 
     resp = client.post(
-        "/user",
+        "/users",
         json={"fullname": randname.upper(), "username": randname, "password": "asfd"},
     )
     data = resp.get_json()
@@ -117,7 +117,7 @@ def test_create_user_failed_on_duplicate(client, randname):
 
 def test_create_user_admin_without_auth_token(client):
     resp = client.post(
-        "/user",
+        "/users",
         json={
             "fullname": "user",
             "username": "user",
@@ -134,7 +134,7 @@ def test_create_user_admin_without_auth_token(client):
 
 def test_create_user_admin_without_admin_auth_token(client, usera_auth_token):
     resp = client.post(
-        "/user",
+        "/users",
         json={
             "fullname": "thura",
             "username": "user",
@@ -152,7 +152,7 @@ def test_create_user_admin_without_admin_auth_token(client, usera_auth_token):
 
 def test_create_user_admin_successful(client, randname, admin_auth_token):
     resp = client.post(
-        "/user",
+        "/users",
         json={
             "fullname": randname.upper(),
             "username": randname,

@@ -1,5 +1,5 @@
 def test_get_user_without_auth_token(client, usera):
-    resp = client.get("/user/" + usera.uuid)
+    resp = client.get("/users/" + usera.uuid)
     data = resp.get_json()
     assert resp.status_code == 401
 
@@ -9,7 +9,7 @@ def test_get_user_without_auth_token(client, usera):
 
 def test_get_user_with_invalid_id(client, usera, usera_auth_token):
     resp = client.get(
-        "/user/" + "no-such-user",
+        "/users/" + "no-such-user",
         headers={"Authorization": "Bearer " + usera_auth_token},
     )
     data = resp.get_json()
@@ -21,7 +21,7 @@ def test_get_user_with_invalid_id(client, usera, usera_auth_token):
 
 def test_get_user_with_invalid_auth_token(client, userb, usera_auth_token):
     resp = client.get(
-        "/user/" + userb.uuid,
+        "/users/" + userb.uuid,
         headers={"Authorization": "Bearer " + usera_auth_token},
     )
     data = resp.get_json()
@@ -33,7 +33,7 @@ def test_get_user_with_invalid_auth_token(client, userb, usera_auth_token):
 
 def test_get_usera_successful(client, usera, usera_auth_token):
     resp = client.get(
-        "/user/" + usera.uuid,
+        "/users/" + usera.uuid,
         headers={"Authorization": "Bearer " + usera_auth_token},
     )
     data = resp.get_json()
@@ -47,7 +47,7 @@ def test_get_usera_successful(client, usera, usera_auth_token):
 
 def test_get_usera_by_admin_successful(client, usera, admin_auth_token):
     resp = client.get(
-        "/user/" + usera.uuid,
+        "/users/" + usera.uuid,
         headers={"Authorization": "Bearer " + admin_auth_token},
     )
     data = resp.get_json()
