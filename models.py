@@ -1,11 +1,12 @@
-from dataclasses import dataclass
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import ForeignKey
+
+from datetime import timedelta
 
 
 db = SQLAlchemy()
 
 
-@dataclass
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(db.String(64), unique=True)
@@ -15,9 +16,18 @@ class User(db.Model):
     admin = db.Column(db.Boolean)
 
 
-class Timzeone(db.Model):
+class Timezone(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.String(64))
+    user_id = db.Column(db.String(64), ForeignKey(User.uuid))
     name = db.Column(db.String(32))
-    city_name = db.Column(db.String(32))
-    difference = db.Column(db.Integer)
+    tzname = db.Column(db.String(32))
+    utcoffset = db.Column(db.Integer)
+
+    def asdict(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "name": self.name,
+            "tzname": self.tzname,
+            "utcoffset": str(timedelta(seconds=self.utcoffset)),
+        }

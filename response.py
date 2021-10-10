@@ -68,3 +68,17 @@ class ExistingUserError(HTTPException):
 
     code = 400
     description = "The username is already being used in the system"
+
+
+class TimezoneNotFound(HTTPException):
+    """Raise when relevant timezone record is not found"""
+
+    code = 404
+    description = "unable to find specified timezone"
+
+
+class InvalidTimezoneError(HTTPException):
+    """Raise when creating timezone with wrong tzname"""
+
+    code = 400
+    description = "The given timezone is not valid"

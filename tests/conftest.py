@@ -3,11 +3,12 @@ import jwt
 import uuid
 import pytest
 
+from pytz import timezone
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash
 
 from app import app
-from models import db, User
+from models import db, User, Timezone
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.getcwd() + "/test.db"
 app.config["TESTING"] = True
@@ -124,3 +125,57 @@ def admin_auth_token(adminuser):
         app.config["SECRET_KEY"],
         algorithm="HS256",
     )
+
+
+@pytest.fixture
+def tza1(usera):
+    tza = Timezone(
+        user_id=usera.uuid,
+        name="Yangon City",
+        tzname="Asia/Yangon",
+        utcoffset=timezone("Asia/Yangon")._utcoffset.total_seconds(),
+    )
+
+    db.session.add(tza)
+    db.session.commit()
+
+    yield tza
+
+    db.session.delete(tza)
+    db.session.commit()
+
+
+@pytest.fixture
+def tza2(usera):
+    tza = Timezone(
+        user_id=usera.uuid,
+        name="Seoul City",
+        tzname="Asia/Seoul",
+        utcoffset=timezone("Asia/Seoul")._utcoffset.total_seconds(),
+    )
+
+    db.session.add(tza)
+    db.session.commit()
+
+    yield tza
+
+    db.session.delete(tza)
+    db.session.commit()
+
+
+@pytest.fixture
+def tzb1(userb):
+    tzb = Timezone(
+        user_id=userb.uuid,
+        name="Singapore City",
+        tzname="Asia/Singapore",
+        utcoffset=timezone("Asia/Singapore")._utcoffset.total_seconds(),
+    )
+
+    db.session.add(tzb)
+    db.session.commit()
+
+    yield tzb
+
+    db.session.delete(tzb)
+    db.session.commit()

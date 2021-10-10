@@ -132,13 +132,15 @@ def update_user(uuid):
     if not request.admin_user and request.user_id != uuid:
         raise AuthorizationError("you are not allowed to update other users")
 
-    user = User.query.filter_by(uuid=uuid).one()
+    try:
+        user = User.query.filter_by(uuid=uuid).first()
+    except exc.SQLAlchemyError as ex:
+        raise DatabaseError(str(ex))
 
     if not user:
         raise UserNotFound()
 
     if "fullname" in data:
-
         user.fullname = data["fullname"]
 
     if "password" in data:

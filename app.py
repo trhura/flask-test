@@ -4,7 +4,9 @@ from flask import Flask
 from werkzeug.exceptions import HTTPException
 
 from models import db
-from user import api
+
+import user
+import timezones
 from response import http_exception_handler
 
 
@@ -15,7 +17,8 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.getcwd() + "/developme
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(app)
-app.register_blueprint(api)
+app.register_blueprint(user.api)
+app.register_blueprint(timezones.api)
 app.register_error_handler(HTTPException, http_exception_handler)
 
 
