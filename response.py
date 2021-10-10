@@ -54,3 +54,17 @@ class TokenValidationError(HTTPException):
 
     code = 401
     description = "missing or malformed jwt token"
+
+
+class DatabaseError(HTTPException):
+    """Raise during errrors on database queries, update etc"""
+
+    code = 500
+    description = "Internal database error occured"
+
+
+class ExistingUserError(HTTPException):
+    """Raise while adding user when there is an existing username"""
+
+    code = 400
+    description = "The username is already being used in the system"

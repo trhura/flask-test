@@ -3,6 +3,7 @@ import uuid
 
 from datetime import timedelta, datetime
 from flask import Blueprint, request, current_app
+from sqlalchemy import exc
 
 from flask_expects_json import expects_json
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -11,9 +12,11 @@ from models import db, User
 from decorators import auth_token_optional, auth_token_required
 from response import (
     AuthorizationError,
-    success_json,
+    ExistingUserError,
     UserNotFound,
     AuthenticationFailure,
+    DatabaseError,
+    success_json,
 )
 
 api = Blueprint("users", __name__)
@@ -68,8 +71,17 @@ def create_user():
         admin=admin,
     )
 
-    db.session.add(new_user)
-    db.session.commit()
+    try:
+        db.session.add(new_user)
+        db.session.commit()
+
+    except exc.IntegrityError:
+        db.session.rollback()
+        raise ExistingUserError()
+
+    except exc.SQLAlchemyError as ex:
+        db.session.rollback()
+        raise DatabaseError(str(ex))
 
     return success_json(message="new user created")
 
@@ -95,6 +107,56 @@ def get_user(uuid):
         raise UserNotFound()
 
     return success_json(user=dict(user))
+
+
+@api.route("/user/<uuid>", methods=["POST"])
+@expects_json(
+    {
+        "type": "object",
+        "properties": {
+            "fullname": {"type": "string"},
+            "password": {"type": "string"},
+            "admin": {"type": "boolean"},
+        },
+        "anyOf": [
+            {"required": ["fullname"]},
+            {"required": ["password"]},
+            {"required": ["admin"]},
+        ],
+    }
+)
+@auth_token_required
+def update_user(uuid):
+    data = request.get_json()
+
+    if not request.admin_user and request.user_id != uuid:
+        raise AuthorizationError("you are not allowed to update other users")
+
+    user = User.query.filter_by(uuid=uuid).one()
+
+    if not user:
+        raise UserNotFound()
+
+    if "fullname" in data:
+
+        user.fullname = data["fullname"]
+
+    if "password" in data:
+        user.password = generate_password_hash(data["password"], method="sha256")
+
+    if "admin" in data:
+        if not request.admin_user:
+            raise AuthorizationError("only admin can update admin users")
+
+        user.admin = data["admin"]
+
+    try:
+        db.session.commit()
+    except exc.SQLAlchemyError as ex:
+        db.session.rollback()
+        raise DatabaseError(str(ex))
+
+    return success_json(message="user updated successfully")
 
 
 @api.route("/user/<uuid>", methods=["DELETE"])
