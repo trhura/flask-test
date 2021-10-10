@@ -21,13 +21,14 @@ api = Blueprint("users", __name__)
 
 @api.route("/user", methods=["GET"])
 @auth_token_required
-def get_all_users():
+def list_users():
     if not request.admin_user:
         raise AuthorizationError("only admin user can access this route")
 
     users = User.query.with_entities(
-        User.public_id,
-        User.name,
+        User.uuid,
+        User.username,
+        User.fullname,
         User.admin,
     ).all()
 
@@ -39,11 +40,12 @@ def get_all_users():
     {
         "type": "object",
         "properties": {
-            "name": {"type": "string"},
+            "fullname": {"type": "string"},
+            "username": {"type": "string"},
             "password": {"type": "string"},
             "admin": {"type": "boolean"},
         },
-        "required": ["name", "password"],
+        "required": ["fullname", "password", "username"],
     }
 )
 @auth_token_optional
@@ -52,15 +54,16 @@ def create_user():
     admin = False
 
     if "admin" in data:
-        if not request.admin_user:
+        if not hasattr(request, "admin_user") or not request.admin_user:
             raise AuthorizationError("only admin can create admin users")
         else:
             admin = True
 
     hashed_password = generate_password_hash(data["password"], method="sha256")
     new_user = User(
-        public_id=str(uuid.uuid4()),
-        name=data["name"],
+        uuid=str(uuid.uuid4()),
+        fullname=data["fullname"],
+        username=data["username"],
         password=hashed_password,
         admin=admin,
     )
@@ -71,17 +74,18 @@ def create_user():
     return success_json(message="new user created")
 
 
-@api.route("/user/<public_id>", methods=["GET"])
+@api.route("/user/<uuid>", methods=["GET"])
 @auth_token_required
-def get_one_user(public_id):
-    if not request.admin and request.user_id != public_id:
+def get_user(uuid):
+    if not request.admin_user and request.user_id != uuid:
         raise AuthorizationError("you are not allowed to access other users")
 
     user = (
-        User.query.filter_by(public_id=public_id)
+        User.query.filter_by(uuid=uuid)
         .with_entities(
-            User.public_id,
-            User.name,
+            User.uuid,
+            User.fullname,
+            User.username,
             User.admin,
         )
         .first()
@@ -93,13 +97,13 @@ def get_one_user(public_id):
     return success_json(user=dict(user))
 
 
-@api.route("/user/<public_id>", methods=["DELETE"])
+@api.route("/user/<uuid>", methods=["DELETE"])
 @auth_token_required
-def delete_user(public_id):
+def delete_user(uuid):
     if not request.admin_user:
         raise AuthorizationError("only admin user can access this route")
 
-    user = User.query.filter_by(public_id=public_id).first()
+    user = User.query.filter_by(uuid=uuid).first()
 
     if not user:
         raise UserNotFound()
@@ -110,20 +114,20 @@ def delete_user(public_id):
     return success_json(message="the user has been deleted")
 
 
-@api.route("/login")
-def login():
+@api.route("/login", methods=["POST"])
+def user_login():
     auth = request.authorization
     if not auth or not auth.username or not auth.password:
         raise AuthenticationFailure()
 
-    user = User.query.filter_by(name=auth.username).first()
+    user = User.query.filter_by(username=auth.username).first()
     if not user:
         raise AuthenticationFailure()
 
     if check_password_hash(user.password, auth.password):
         token = jwt.encode(
             {
-                "sub": user.public_id,
+                "sub": user.uuid,
                 "exp": datetime.utcnow() + timedelta(minutes=30),
                 "adm": user.admin,
             },
