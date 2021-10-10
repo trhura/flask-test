@@ -11,7 +11,7 @@ from response import http_exception_handler
 app = Flask(__name__)
 
 app.config["SECRET_KEY"] = "thisissecret"
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.getcwd() + "/test.db"
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.getcwd() + "/development.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(app)

@@ -22,7 +22,7 @@ def auth_token_required(f):
             raise TokenValidationError("authorization token missing")
 
         try:
-            request.claims = jwt.decode(
+            claims = jwt.decode(
                 token,
                 current_app.config["SECRET_KEY"],
                 algorithms=["HS256"],
@@ -32,6 +32,10 @@ def auth_token_required(f):
                     "verify_exp": True,
                 },
             )
+
+            request.user_id = claims["sub"]
+            request.admin_user = claims["adm"]
+
         except InvalidTokenError as ex:
             raise TokenValidationError(str(ex))
 
@@ -51,7 +55,7 @@ def auth_token_optional(f):
             token = request.headers[authorization_header].split()[1]
 
             try:
-                request.claims = jwt.decode(
+                claims = jwt.decode(
                     token,
                     current_app.config["SECRET_KEY"],
                     algorithms=["HS256"],
@@ -59,6 +63,10 @@ def auth_token_optional(f):
                         "verify_signature": False,
                     },
                 )
+
+                request.user_id = claims["sub"]
+                request.admin_user = claims["adm"]
+
             except Exception:
                 pass
 

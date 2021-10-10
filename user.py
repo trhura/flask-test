@@ -22,7 +22,7 @@ api = Blueprint("users", __name__)
 @api.route("/user", methods=["GET"])
 @auth_token_required
 def get_all_users():
-    if not request.claims["adm"]:
+    if not request.admin_user:
         raise AuthorizationError("only admin user can access this route")
 
     users = User.query.with_entities(
@@ -48,17 +48,14 @@ def get_all_users():
 )
 @auth_token_optional
 def create_user():
-    admin = False
     data = request.get_json()
+    admin = False
 
-    if "admin" in data and data["admin"]:
-        if not hasattr(request, "claims"):
+    if "admin" in data:
+        if not request.admin_user:
             raise AuthorizationError("only admin can create admin users")
-
-        if not request.claims["adm"]:
-            raise AuthorizationError("only admin can create admin users")
-
-        admin = True
+        else:
+            admin = True
 
     hashed_password = generate_password_hash(data["password"], method="sha256")
     new_user = User(
@@ -71,13 +68,13 @@ def create_user():
     db.session.add(new_user)
     db.session.commit()
 
-    return success_json(messsage="new user created")
+    return success_json(message="new user created")
 
 
 @api.route("/user/<public_id>", methods=["GET"])
 @auth_token_required
 def get_one_user(public_id):
-    if not request.claims["adm"] and request.claims["sub"] != public_id:
+    if not request.admin and request.user_id != public_id:
         raise AuthorizationError("you are not allowed to access other users")
 
     user = (
@@ -99,7 +96,7 @@ def get_one_user(public_id):
 @api.route("/user/<public_id>", methods=["DELETE"])
 @auth_token_required
 def delete_user(public_id):
-    if not request.claims["adm"]:
+    if not request.admin_user:
         raise AuthorizationError("only admin user can access this route")
 
     user = User.query.filter_by(public_id=public_id).first()
