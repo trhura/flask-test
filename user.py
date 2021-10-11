@@ -184,7 +184,17 @@ def user_login():
     if not auth or not auth.username or not auth.password:
         raise AuthenticationFailure()
 
-    user = User.query.filter_by(username=auth.username).first()
+    user = (
+        User.query.with_entities(
+            User.uuid,
+            User.username,
+            User.fullname,
+            User.admin,
+            User.password,
+        )
+        .filter_by(username=auth.username)
+        .first()
+    )
     if not user:
         raise AuthenticationFailure()
 
@@ -199,6 +209,9 @@ def user_login():
             algorithm="HS256",
         )
 
-        return success_json(auth_token=token)
+        user_dict = user = dict(user)
+        del user_dict["password"]
+
+        return success_json(auth_token=token, user=user_dict)
 
     raise AuthenticationFailure()

@@ -38,3 +38,5 @@ def test_user_login_successful(client, usera):
 
     assert data["success"] is True
     assert data["auth_token"] is not None
+    assert data["user"]["username"] == usera.username
+    assert data["user"]["uuid"] == usera.uuid
