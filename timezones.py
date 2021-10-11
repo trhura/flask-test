@@ -1,5 +1,5 @@
 from pytz import all_timezones, timezone
-from flask import Blueprint, request
+from flask import Blueprint, request, current_app
 
 from sqlalchemy import exc
 from flask_expects_json import expects_json
@@ -65,7 +65,8 @@ def create_timezone(uuid):
 
     except exc.SQLAlchemyError as ex:
         db.session.rollback()
-        raise DatabaseError(str(ex))
+        current_app.logger.error(ex)
+        raise DatabaseError()
 
     return success_json(message="new timezone added")
 
@@ -79,7 +80,8 @@ def get_timezone(uuid, tzid):
     try:
         timezone = Timezone.query.filter_by(user_id=uuid, id=tzid).first()
     except exc.SQLAlchemyError as ex:
-        raise DatabaseError(str(ex))
+        current_app.logger.error(ex)
+        raise DatabaseError()
 
     if not timezone:
         raise TimezoneNotFound()
@@ -108,7 +110,8 @@ def update_timezone(uuid, tzid):
     try:
         tzrecord = Timezone.query.filter_by(user_id=uuid, id=tzid).first()
     except exc.SQLAlchemyError as ex:
-        raise DatabaseError(str(ex))
+        current_app.logger.error(ex)
+        raise DatabaseError()
 
     if not tzrecord:
         raise TimezoneNotFound()
@@ -131,8 +134,9 @@ def update_timezone(uuid, tzid):
     try:
         db.session.commit()
     except exc.SQLAlchemyError as ex:
+        current_app.logger.error(ex)
         db.session.rollback()
-        raise DatabaseError(str(ex))
+        raise DatabaseError()
 
     return success_json(message="timezone updated successfully")
 
@@ -143,7 +147,8 @@ def delete_timezone(uuid, tzid):
     try:
         tzrecord = Timezone.query.filter_by(user_id=uuid, id=tzid).first()
     except exc.SQLAlchemyError as ex:
-        raise DatabaseError(str(ex))
+        current_app.logger.error(ex)
+        raise DatabaseError()
 
     if not tzrecord:
         raise TimezoneNotFound()

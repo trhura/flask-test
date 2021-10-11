@@ -80,8 +80,9 @@ def create_user():
         raise ExistingUserError()
 
     except exc.SQLAlchemyError as ex:
+        current_app.logger.error(ex)
         db.session.rollback()
-        raise DatabaseError(str(ex))
+        raise DatabaseError()
 
     return success_json(message="new user created")
 
@@ -135,7 +136,8 @@ def update_user(uuid):
     try:
         user = User.query.filter_by(uuid=uuid).first()
     except exc.SQLAlchemyError as ex:
-        raise DatabaseError(str(ex))
+        current_app.logger.error(ex)
+        raise DatabaseError()
 
     if not user:
         raise UserNotFound()
@@ -155,8 +157,9 @@ def update_user(uuid):
     try:
         db.session.commit()
     except exc.SQLAlchemyError as ex:
+        current_app.logger.error(ex)
         db.session.rollback()
-        raise DatabaseError(str(ex))
+        raise DatabaseError()
 
     return success_json(message="user updated successfully")
 
