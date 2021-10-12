@@ -28,14 +28,22 @@ def list_users():
     if not request.admin_user:
         raise AuthorizationError("only admin user can access this route")
 
-    users = User.query.with_entities(
+    pagination = User.query.with_entities(
         User.uuid,
         User.username,
         User.fullname,
         User.admin,
-    ).all()
+    ).paginate(max_per_page=30)
 
-    return success_json(users=[dict(user) for user in users])
+    return success_json(
+        current_page=pagination.page,
+        prev_page=pagination.prev_num,
+        next_page=pagination.next_num,
+        per_page=pagination.per_page,
+        pages=pagination.pages,
+        total=pagination.total,
+        users=[dict(user) for user in pagination.items],
+    )
 
 
 @api.route("/users", methods=["POST"])
