@@ -4,13 +4,14 @@ from flask import Blueprint, request, current_app
 from sqlalchemy import exc
 from flask_expects_json import expects_json
 
-from models import Timezone, db
+from models import Timezone, db, User
 from decorators import auth_token_required
 from response import (
     AuthorizationError,
     TimezoneNotFound,
     InvalidTimezoneError,
     DatabaseError,
+    UserNotFound,
     success_json,
 )
 
@@ -24,6 +25,10 @@ def list_timezones(uuid):
 
     if not request.admin_user and request.user_id != uuid:
         raise AuthorizationError("you are not allowed to get timezone of other users")
+
+    user = User.query.filter_by(uuid=uuid).first()
+    if not user:
+        raise UserNotFound()
 
     return success_json(timezones=[tz.asdict() for tz in timezones])
 
@@ -47,6 +52,10 @@ def create_timezone(uuid):
         raise AuthorizationError(
             "you are not allowed to create timezone for other users"
         )
+
+    user = User.query.filter_by(uuid=uuid).first()
+    if not user:
+        raise UserNotFound("the specified user does not exists in our system")
 
     if data["tzname"] not in all_timezones:
         raise InvalidTimezoneError()
@@ -76,6 +85,10 @@ def create_timezone(uuid):
 def get_timezone(uuid, tzid):
     if not request.admin_user and request.user_id != uuid:
         raise AuthorizationError("you are not allowed to get timezone of other users")
+
+    user = User.query.filter_by(uuid=uuid).first()
+    if not user:
+        raise UserNotFound()
 
     try:
         timezone = Timezone.query.filter_by(user_id=uuid, id=tzid).first()
@@ -121,6 +134,10 @@ def update_timezone(uuid, tzid):
             "you are not allowed to update timezone for other users"
         )
 
+    user = User.query.filter_by(uuid=uuid).first()
+    if not user:
+        raise UserNotFound()
+
     if "name" in data:
         tzrecord.name = data["name"]
 
@@ -157,6 +174,10 @@ def delete_timezone(uuid, tzid):
         raise AuthorizationError(
             "you are not allowed to delete timezone for other users"
         )
+
+    user = User.query.filter_by(uuid=uuid).first()
+    if not user:
+        raise UserNotFound()
 
     db.session.delete(tzrecord)
     db.session.commit()

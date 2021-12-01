@@ -6,6 +6,8 @@ from functools import wraps
 from jwt.exceptions import InvalidTokenError
 from response import TokenValidationError
 
+from models import User
+
 authorization_header = "Authorization"
 
 
@@ -39,6 +41,10 @@ def auth_token_required(f):
         except InvalidTokenError as ex:
             raise TokenValidationError(str(ex))
 
+        user = User.query.filter_by(uuid=request.user_id).first()
+        if not user:
+            raise TokenValidationError("the authenticated user is no longer valid")
+
         return f(*args, **kwargs)
 
     return validate_jwt_token
@@ -66,6 +72,12 @@ def auth_token_optional(f):
 
                 request.user_id = claims["sub"]
                 request.admin_user = claims["adm"]
+
+                user = User.query.filter_by(uuid=request.user_id).first()
+                if not user:
+                    raise TokenValidationError(
+                        "the authenticated user is no longer valid"
+                    )
 
             except Exception:
                 pass
